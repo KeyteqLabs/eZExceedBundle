@@ -1,0 +1,7 @@
+parameters:
+#    kt_qe_z_exceed.example.class: KTQ\Bundle\eZExceedBundle\Example
+
+services:
+#    kt_qe_z_exceed.example:
+#        class: %kt_qe_z_exceed.example.class%
+#        arguments: [@service_id, "plain_value", %parameter%]

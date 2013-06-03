@@ -1,0 +1,3 @@
+kt_qe_z_exceed_homepage:
+    pattern:  /hello/{name}
+    defaults: { _controller: KTQeZExceedBundle:Default:index }
