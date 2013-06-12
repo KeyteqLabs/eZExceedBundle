@@ -1,7 +1,10 @@
-parameters:
-#    kt_qe_z_exceed.example.class: KTQ\Bundle\eZExceedBundle\Example
-
 services:
-#    kt_qe_z_exceed.example:
-#        class: %kt_qe_z_exceed.example.class%
-#        arguments: [@service_id, "plain_value", %parameter%]
+    ktq.twig.extension:
+        class: KTQ\Bundle\eZExceedBundle\Twig\eZExceedTwigExtension
+        arguments: [ @ezpublish.fieldType.ezpage.pageService, @ezpublish_legacy.config.resolver, @templating, @ktq.twig.pencil.model ]
+        tags:
+            - { name: twig.extension }
+
+    ktq.twig.pencil.model:
+        class: KTQ\Bundle\eZExceedBundle\Model\Pencil
+        arguments: [ @ezpublish.api.repository, @ezpublish.fieldType.ezpage.pageService ]
