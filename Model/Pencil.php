@@ -13,6 +13,7 @@ namespace KTQ\Bundle\eZExceedBundle\Model;
 use eZ\Publish\Core\SignalSlot\Repository;
 use eZ\Publish\Core\Repository\ContentService;
 use eZ\Publish\Core\Repository\ContentTypeService;
+use eZ\Publish\API\Repository\Values\Content\VersionInfo;
 use eZ\Publish\Core\Repository\LocationService;
 use eZ\Publish\Core\FieldType\Page\PageService;
 use eZ\Publish\Core\Repository\LanguageService;
@@ -170,11 +171,7 @@ class Pencil
     protected function addBlock( Block $block )
     {
         $this->pageField = $this->getPageField();
-
-        // TODO: Make sure the block is from the user's latest draft. How..?
-        //$this->block = $this->fetchBlockFromLatestUserDraft( $block );
-
-        $this->block = $block;
+        $this->block = $this->fetchBlockFromLatestUserDraft( $block );
         $this->setZoneIndex();
 
         $blockItems = $this->pageService->getValidBlockItems( $block );
@@ -247,7 +244,6 @@ class Pencil
             {
                 foreach( $zone->blocks as $block )
                 {
-                    echo 'From Content: ' . $block->id . '<br />From input: ' . $this->block->id;
                     if( $block->id === $this->block->id )
                     {
                         $this->zoneIndex = $zoneIndex;
@@ -258,9 +254,12 @@ class Pencil
         }
     }
 
-    protected function getPageField()
+    protected function getPageField( Content $content = null )
     {
-        $fields = $this->currentContent->getFields();
+        if( $content === null )
+            $content = $this->currentContent;
+
+        $fields = $content->getFields();
 
         foreach( $fields as $field )
         {
@@ -278,27 +277,36 @@ class Pencil
         if( $this->pageField === null )
             return $currentBlock;
 
-        echo 'pagefield is not null';
-
-        if( !$draft = eZExceedObject::fetchLatestUserDraft( $this->currentContentId, $this->repository->getCurrentUser() ) )
+        if( !$allCurrentUserDrafts = $this->contentService->loadContentDrafts() )
             return $currentBlock;
 
-        if( !$field = eZExceedPage::fetchEzpageAttribute( $draft ) )
+        $versionInfoFilter = function( VersionInfo $versionInfo )
+        {
+            if( $versionInfo->contentInfo->id === $this->currentContentId )
+                return $versionInfo;
+        };
+
+        $versionInfos = array_filter( $allCurrentUserDrafts, $versionInfoFilter );
+
+        if( !$versionInfo = reset( $versionInfos ) )
             return $currentBlock;
 
-        $this->debug( $field );
-        //$fieldValue = $field->content();
+        $content = $this->contentService->loadContentByVersionInfo( $versionInfo );
+        $pageField = $this->getPageField( $content );
 
-        /*
-        foreach($fieldValue->zones as $zone) {
-            for($i = 0; $i < $zone->getBlockCount(); $i++) {
-                $block = $zone->getBlock($i);
+        if( !$pageField->zones )
+            return $currentBlock;
 
-                if ($currentBlock->attribute('id') === $block->attribute('id'))
+        foreach( $pageField->zones as $zone )
+        {
+            foreach( $zone->blocks as $block )
+            {
+                if( $block->id === $this->block->id )
+                {
                     return $block;
+                }
             }
         }
-        */
 
         return $currentBlock;
     }
@@ -314,19 +322,5 @@ class Pencil
     public function attribute( $attribute )
     {
         return $this->$attribute;
-    }
-
-
-
-
-
-
-
-
-    private function debug( $stuff )
-    {
-        echo '<pre>';
-        print_r( $stuff );
-        echo '</pre>';
     }
 }
