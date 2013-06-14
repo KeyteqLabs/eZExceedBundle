@@ -20,7 +20,7 @@
             <div class="eze-pencil eze-block-pencil kp-edit-block invisible">
                 <div class="kp-edit-block-box">
                     <ul class="kp-edit-block-elements">
-                        {#% if canedit %}
+                        {% if canedit %}
                             {% if pencil.page.block %}
                                 {% if manualaddingofitems == 'enabled' %}
                                     <li class="add">
@@ -41,7 +41,7 @@
                                     <span>{{ pencil.title }}</span>
                                 </li>
                             {% endif %}
-                        {% endif %#}
+                        {% endif %}
                         {% for entity in pencil.entities %}
                             {% if entity.separator %}
                                 <li class="separator">{{ entity.title|e }}</li>

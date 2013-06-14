@@ -6,6 +6,7 @@
  * @copyright //autogen//
  * @license //autogen//
  * @version //autogen//
+ *
  */
 
 namespace KTQ\Bundle\eZExceedBundle\Model;
