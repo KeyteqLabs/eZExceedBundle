@@ -7,4 +7,4 @@ services:
 
     ktq.twig.pencil.model:
         class: KTQ\Bundle\eZExceedBundle\Model\Pencil
-        arguments: [ @ezpublish.api.repository, @ezpublish.fieldType.ezpage.pageService ]
+        arguments: [ @service_container, @ezpublish.api.repository, @ezpublish.fieldType.ezpage.pageService ]

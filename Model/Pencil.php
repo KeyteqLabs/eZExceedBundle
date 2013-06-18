@@ -35,6 +35,9 @@ class Pencil
     // @var int
     protected $currentContentId;
 
+    // @var Location
+    protected $currentLocation;
+
     // @var array
     protected $entities;
 
@@ -72,7 +75,7 @@ class Pencil
     protected $canCurrentUserEditCurrentContent;
 
 
-    public function __construct( Repository $repository, PageService $pageService )
+    public function __construct( $serviceContainer, Repository $repository, PageService $pageService )
     {
         $this->entities = array();
         $this->title = '';
@@ -87,17 +90,21 @@ class Pencil
         $this->languageService = $this->repository->getContentLanguageService();
         $this->pageService = $pageService;
 
+        $locationId = $serviceContainer->get('request')->attributes->get('locationId');
+        if($locationId)
+        {
+            $this->currentLocation = $this->locationService->loadLocation($locationId);
+            $this->currentContent = $this->contentService->loadContentByContentInfo($this->currentLocation->contentInfo);
+            $this->currentContentId = $this->currentContent->getVersionInfo()->contentInfo->id;
+            $this->canCurrentUserEditCurrentContent = $this->repository->canUser( 'content', 'edit', $this->currentContent );
+        }
 
         // TODO: Remove
         $this->zoneIndex = 0;
     }
 
-    public function fill( $input, Content $currentContent )
+    public function fill($input)
     {
-        $this->currentContent = $currentContent;
-        $this->currentContentId = $currentContent->getVersionInfo()->contentInfo->id;
-        $this->canCurrentUserEditCurrentContent = $this->repository->canUser( 'content', 'edit', $this->currentContent );
-
         if( is_array( $input ) )
         {
             foreach( $input as $key => $value )

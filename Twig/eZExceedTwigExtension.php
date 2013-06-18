@@ -66,9 +66,9 @@ class eZExceedTwigExtension extends Twig_Extension
      * @return string The HTML markup
      */
 
-    public function eZExceedPencil( $input, Content $currentContent )
+    public function eZExceedPencil($input)
     {
-        $this->pencil->fill( $input, $currentContent );
+        $this->pencil->fill($input);
 
         // Mapping stuff up manually as Twig can’t handle the entire $pencil object
         $parameters = array(
