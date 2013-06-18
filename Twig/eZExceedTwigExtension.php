@@ -95,7 +95,7 @@ class eZExceedTwigExtension extends Twig_Extension
             )
         );
 
-        echo $this->templateEngine->render( 'KTQeZExceedBundle:particle:pencil.html.twig', $parameters );
+        echo $this->templateEngine->render( 'KTQeZExceedBundle::pencil.html.twig', $parameters );
     }
 
     public function getIniSetting( $name, $section, $file )
