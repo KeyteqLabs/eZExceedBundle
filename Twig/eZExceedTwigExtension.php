@@ -11,24 +11,23 @@ use Symfony\Component\Templating\EngineInterface;
 use Symfony\Component\HttpFoundation\Request;
 use KTQ\Bundle\eZExceedBundle\Model\Pencil;
 use eZ\Bundle\EzPublishLegacyBundle\DependencyInjection\Configuration\LegacyConfigResolver;
-use eZ\Publish\Core\Repository\Repository;
-use eZ\Publish\Core\FieldType\Page\PageService;
+use eZ\Publish\Core\SignalSlot\Repository;
 use eZ\Publish\Core\Repository\Values\Content\Content;
 
 class eZExceedTwigExtension extends Twig_Extension
 {
-    protected $pageService;
+    protected $repository;
     protected $legacyConfigResolver;
     protected $templateEngine;
     protected $pencil;
 
     public function __construct(
-        PageService $pageService,
+        Repository $repository,
         LegacyConfigResolver $legacyConfigResolver,
         EngineInterface $templateEngine,
         Pencil $pencil)
     {
-        $this->pageService = $pageService;
+        $this->repository = $repository;
         $this->legacyConfigResolver = $legacyConfigResolver;
         $this->templateEngine = $templateEngine;
 
@@ -68,6 +67,9 @@ class eZExceedTwigExtension extends Twig_Extension
 
     public function eZExceedPencil($input)
     {
+        if ($this->repository->getCurrentUser()->login === 'anonymous')
+            return false;
+
         $this->pencil->fill($input);
 
         // Mapping stuff up manually as Twig can’t handle the entire $pencil object

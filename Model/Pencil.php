@@ -105,31 +105,34 @@ class Pencil
 
     public function fill($input)
     {
-        if( is_array( $input ) )
+        if ($this->repository->canUser( 'content', 'edit', $this->currentContent ))
         {
-            foreach( $input as $key => $value )
+            if( is_array( $input ) )
             {
-                // Arrays of blocks are not supported
-                if( $value instanceof Block )
-                    return;
-
-                // Array contains Contents or Locations
-                if( is_numeric( $key ) )
+                foreach( $input as $key => $value )
                 {
-                    if( $this->isPencilCompatible( $value ) )
+                    // Arrays of blocks are not supported
+                    if( $value instanceof Block )
+                        return;
+
+                    // Array contains Contents or Locations
+                    if( is_numeric( $key ) )
                     {
-                        $this->addEntity( $value );
+                        if( $this->isPencilCompatible( $value ) )
+                        {
+                            $this->addEntity( $value );
+                        }
+                    }
+                    else
+                    {
+                        // Array is a set of Ids.
+                        $this->addIdArray( $value, $key );
                     }
                 }
-                else
-                {
-                    // Array is a set of Ids.
-                    $this->addIdArray( $value, $key );
-                }
             }
+            else
+                $this->addEntity( $input );
         }
-        else
-            $this->addEntity( $input );
     }
 
     protected function addEntity( $value )

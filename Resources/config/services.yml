@@ -1,7 +1,7 @@
 services:
     ktq.twig.extension:
         class: KTQ\Bundle\eZExceedBundle\Twig\eZExceedTwigExtension
-        arguments: [ @ezpublish.fieldType.ezpage.pageService, @ezpublish_legacy.config.resolver, @templating, @ktq.twig.pencil.model ]
+        arguments: [ @ezpublish.api.repository, @ezpublish_legacy.config.resolver, @templating, @ktq.twig.pencil.model ]
         tags:
             - { name: twig.extension }
 
