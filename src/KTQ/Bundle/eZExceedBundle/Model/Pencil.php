@@ -91,8 +91,7 @@ class Pencil
         $this->pageService = $pageService;
 
         $locationId = $serviceContainer->get('request')->attributes->get('locationId');
-        if($locationId)
-        {
+        if ($locationId) {
             $this->currentLocation = $this->locationService->loadLocation($locationId);
             $this->currentContent = $this->contentService->loadContentByContentInfo($this->currentLocation->contentInfo);
             $this->currentContentId = $this->currentContent->getVersionInfo()->contentInfo->id;
@@ -105,65 +104,58 @@ class Pencil
 
     public function fill($input)
     {
-        if ($this->repository->canUser( 'content', 'edit', $this->currentContent ))
-        {
-            if( is_array( $input ) )
-            {
-                foreach( $input as $key => $value )
-                {
-                    // Arrays of blocks are not supported
-                    if( $value instanceof Block )
-                        return;
+        if (is_array($input)) {
+            foreach ($input as $key => $value) {
+                // Arrays of blocks are not supported
+                if($value instanceof Block)
+                    return false;
 
-                    // Array contains Contents or Locations
-                    if( is_numeric( $key ) )
-                    {
-                        if( $this->isPencilCompatible( $value ) )
-                        {
-                            $this->addEntity( $value );
-                        }
-                    }
-                    else
-                    {
-                        // Array is a set of Ids.
-                        $this->addIdArray( $value, $key );
+                // Array contains Contents or Locations
+                if (is_numeric($key)) {
+                    if ($this->isPencilCompatible($value)) {
+                        $this->addEntity($value);
                     }
                 }
+                else {
+                    // Array is a set of Ids.
+                    $this->addIdArray($value, $key );
+                }
             }
-            else
-                $this->addEntity( $input );
         }
+        else {
+            if ($this->repository->canUser( 'content', 'edit', $this->currentContent )) {
+                $this->addEntity( $input );
+            }
+        }
+        return true;
     }
 
     protected function addEntity( $value )
     {
-        if( $value )
-        {
-            if( $value instanceof Content )
-                $this->addContent( $value );
-
-            else if( $value instanceof Location )
-                $this->addLocation( $value );
-
-            else if( $value instanceof Block )
-                $this->addBlock( $value );
+        switch (true) {
+            case $value instanceof Content:
+                return $this->addContent($value);
+            case $value instanceof Location:
+                return $this->addLocation($value);
+            case $value instanceof Block:
+                return $this->addBlock($value);
         }
     }
 
     protected function addContent( Content $content )
     {
-        if( $this->repository->canUser( 'content', 'edit', $content ) )
-        {
+        if ($this->repository->canUser('content', 'edit', $content)) {
             $contentVersionInfo = $content->getVersionInfo();
-            $contentTypeIdentifier = $this->contentTypeService->loadContentType( $contentVersionInfo->contentInfo->contentTypeId )->identifier;
+            $contentTypeIdentifier = $this->contentTypeService->loadContentType($contentVersionInfo->contentInfo->contentTypeId)->identifier;
 
             $name = $contentVersionInfo->contentInfo->name;
 
-            if( array_key_exists( $this->languageService->getDefaultLanguageCode(), $contentVersionInfo->names ) )
+            if(array_key_exists($this->languageService->getDefaultLanguageCode(), $contentVersionInfo->names))
                 $name = $contentVersionInfo->names[ $this->languageService->getDefaultLanguageCode() ];
 
             $entity = array(
                 'id' => $content->__get( 'id' ),
+                'separator' => false,
                 'name' => $name,
                 'classIdentifier' => $contentTypeIdentifier
             );
@@ -173,8 +165,7 @@ class Pencil
 
     protected function addLocation( Location $location )
     {
-        if( $this->repository->canUser( 'content', 'read', $location->getContentInfo(), $location ) )
-        {
+        if ($this->repository->canUser('content', 'read', $location->getContentInfo(), $location)) {
             $this->addContent( $this->contentService->loadContentByContentInfo( $location->getContentInfo() ) );
         }
     }
@@ -186,31 +177,29 @@ class Pencil
         $this->setZoneIndex();
 
         $blockItems = $this->pageService->getValidBlockItems( $block );
-        if( $blockItems )
-        {
-            $locationIdMapper = function( $blockItem )
+        if ($blockItems) {
+            $locationIdMapper = function($blockItem)
             {
                 return $blockItem->locationId;
             };
 
             $locationIdList = array_map( $locationIdMapper, $blockItems );
             // Use 'nodes' and not 'locations' to remain compatible
-            $this->addIdArray( $locationIdList, 'nodes' );
+            $this->addIdArray($locationIdList, 'nodes');
         }
 
         $waitingBlockItems = $this->pageService->getWaitingBlockItems( $block );
-        if( $waitingBlockItems )
-        {
-            $this->addSeparator( 'Content in queue' );
+        if ($waitingBlockItems) {
+            $this->addSeparator('Content in queue');
 
-            $contentIdMapper = function( $blockItem )
+            $contentIdMapper = function($blockItem)
             {
                 return $blockItem->contentId;
             };
 
-            $contentIdList = array_map( $contentIdMapper, $waitingBlockItems );
+            $contentIdList = array_map($contentIdMapper, $waitingBlockItems);
             // Use 'objects' and not 'contents' to remain compatible
-            $this->addIdArray( $contentIdList, 'objects' );
+            $this->addIdArray($contentIdList, 'objects');
         }
     }
 
@@ -220,15 +209,15 @@ class Pencil
         // $this->title = \ezpI18n::tr( 'ezexceed', 'Edit ' . $type );
         $this->title = 'Edit ' . $type;
 
-        if( $type === 'objects' )
-        {
-            foreach( $values as $contentId )
-                $this->addContent( $this->contentService->loadContent( $contentId ) );
+        if ($type === 'objects') {
+            foreach($values as $contentId) {
+                $this->addContent($this->contentService->loadContent($contentId));
+            }
         }
-        elseif( $type === 'nodes' )
-        {
-            foreach( $values as $locationId )
-                $this->addLocation( $this->locationService->loadLocation( $locationId ) );
+        elseif ($type === 'nodes') {
+            foreach($values as $locationId) {
+                $this->addLocation($this->locationService->loadLocation($locationId));
+            }
         }
     }
 
