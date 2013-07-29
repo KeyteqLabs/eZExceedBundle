@@ -67,10 +67,13 @@ class eZExceedTwigExtension extends Twig_Extension
 
     public function eZExceedPencil($input)
     {
-        if ($this->repository->getCurrentUser()->login === 'anonymous')
+        if ($this->repository->getCurrentUser()->login === 'anonymous') {
             return false;
+        }
 
-        $this->pencil->fill($input);
+        if (!$this->pencil->fill($input)) {
+            return false;
+        }
 
         // Mapping stuff up manually as Twig can’t handle the entire $pencil object
         $parameters = array(
