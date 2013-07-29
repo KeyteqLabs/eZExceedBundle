@@ -5,8 +5,12 @@
     * Dynamically load images which are now given a hard-coded path
 #}
 {# if eq( http-header('X-Exceed-RenderToolbar'), 'no' )|not #}
-    {% set manualaddingofitems = ini('ManualAddingOfItems', pencil.page.block.type, 'block.ini') %}
+    {% set manualaddingofitems = "enabled" %}
     {% set locale = ini('ContentObjectLocale', 'RegionalSettings', 'site.ini') %}
+    {% set manualaddingofitems = "enabled" %}
+    {# TODO Make this shit work
+    {% set manualaddingofitems = ini('ManualAddingOfItems', pencil.page.block.type, 'block.ini') %}
+    #}
     {% if '@' in locale %}
         {% set locale = locale|split('@')[0] %}
     {% endif %}
