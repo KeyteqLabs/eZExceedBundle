@@ -175,7 +175,7 @@ class Pencil
     protected function addBlock(Block $block)
     {
         $this->pageField = $this->getPageField();
-        $this->block = $this->fetchBlockFromLatestUserDraft( $block );
+        $this->block = $block;
         $this->setZoneIndex();
 
         $blockItems = $this->pageService->getValidBlockItems( $block );
