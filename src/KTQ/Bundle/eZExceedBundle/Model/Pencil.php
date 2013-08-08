@@ -149,9 +149,11 @@ class Pencil
             $contentTypeIdentifier = $this->contentTypeService->loadContentType($contentVersionInfo->contentInfo->contentTypeId)->identifier;
 
             $name = $contentVersionInfo->contentInfo->name;
+            $defaultLanguageCode = $this->languageService->getDefaultLanguageCode();
 
-            if(array_key_exists($this->languageService->getDefaultLanguageCode(), $contentVersionInfo->names))
-                $name = $contentVersionInfo->names[ $this->languageService->getDefaultLanguageCode() ];
+            if (isset($contentVersionInfo->names[$defaultLanguageCode])) {
+                $name = $contentVersionInfo->names[$defaultLanguageCode];
+            }
 
             $entity = array(
                 'id' => $content->__get( 'id' ),
@@ -170,7 +172,7 @@ class Pencil
         }
     }
 
-    protected function addBlock( Block $block )
+    protected function addBlock(Block $block)
     {
         $this->pageField = $this->getPageField();
         $this->block = $this->fetchBlockFromLatestUserDraft( $block );
@@ -178,12 +180,9 @@ class Pencil
 
         $blockItems = $this->pageService->getValidBlockItems( $block );
         if ($blockItems) {
-            $locationIdMapper = function($blockItem)
-            {
-                return $blockItem->locationId;
-            };
+            $locationIdMapper = function($blockItem) { return $blockItem->locationId; };
+            $locationIdList = array_map($locationIdMapper, $blockItems);
 
-            $locationIdList = array_map( $locationIdMapper, $blockItems );
             // Use 'nodes' and not 'locations' to remain compatible
             $this->addIdArray($locationIdList, 'nodes');
         }
@@ -192,18 +191,15 @@ class Pencil
         if ($waitingBlockItems) {
             $this->addSeparator('Content in queue');
 
-            $contentIdMapper = function($blockItem)
-            {
-                return $blockItem->contentId;
-            };
-
+            $contentIdMapper = function($blockItem) { return $blockItem->contentId; };
             $contentIdList = array_map($contentIdMapper, $waitingBlockItems);
+
             // Use 'objects' and not 'contents' to remain compatible
             $this->addIdArray($contentIdList, 'objects');
         }
     }
 
-    protected function addIdArray( $values, $type )
+    protected function addIdArray($values, $type)
     {
         // TODO: Translate somehow
         // $this->title = \ezpI18n::tr( 'ezexceed', 'Edit ' . $type );
@@ -221,34 +217,21 @@ class Pencil
         }
     }
 
-    protected function isPencilCompatible( $input )
+    protected function isPencilCompatible($input)
     {
-        $compatible = false;
-
-        if( is_object( $input ) )
-        {
-            if( $input instanceof Block || $input instanceof Content || $input instanceof Location )
-            {
-                $compatible = true;
-            }
-        }
-
-        return $compatible;
+        return ($input instanceof Block || $input instanceof Content || $input instanceof Location);
     }
 
     protected function setZoneIndex()
     {
-        if( $this->pageField )
-        {
-            foreach( $this->pageField->zones as $zoneIndex => $zone )
-            {
-                foreach( $zone->blocks as $block )
-                {
-                    if( $block->id === $this->block->id )
-                    {
-                        $this->zoneIndex = $zoneIndex;
-                        break;
-                    }
+        if (!$this->pageField) {
+            return false;
+        }
+        foreach ($this->pageField->zones as $zoneIndex => $zone) {
+            foreach ($zone->blocks as $block) {
+                if ($block->id === $this->block->id) {
+                    $this->zoneIndex = $zoneIndex;
+                    return true;
                 }
             }
         }
@@ -256,16 +239,13 @@ class Pencil
 
     protected function getPageField( Content $content = null )
     {
-        if( $content === null )
-            $content = $this->currentContent;
-
+        $content = $content ?: $this->currentContent;
         $fields = $content->getFields();
 
-        foreach( $fields as $field )
-        {
+        foreach ($fields as $field) {
             $field = $field->value;
 
-            if( property_exists( $field, 'page' ) && $field->page instanceof Page )
+            if (property_exists($field, 'page') && $field->page instanceof Page)
                 return $field->page;
         }
 
@@ -274,37 +254,37 @@ class Pencil
 
     protected function fetchBlockFromLatestUserDraft( $currentBlock )
     {
-        if( $this->pageField === null )
+        if ($this->pageField === null) {
             return $currentBlock;
+        }
 
-        if( !$allCurrentUserDrafts = $this->contentService->loadContentDrafts() )
+        $allCurrentUserDrafts = $this->contentService->loadContentDrafts();
+        if (!$allCurrentUserDrafts) {
             return $currentBlock;
+        }
 
-        $versionInfoFilter = function( VersionInfo $versionInfo )
+        $contentId = $this->currentContentId;
+        $versionInfoFilter = function(VersionInfo $version) use ($contentId)
         {
-            if( $versionInfo->contentInfo->id === $this->currentContentId )
-                return $versionInfo;
+            return $version->contentInfo->id === $contentId;
         };
 
-        $versionInfos = array_filter( $allCurrentUserDrafts, $versionInfoFilter );
+        $versionInfos = array_filter($allCurrentUserDrafts, $versionInfoFilter);
 
         if( !$versionInfo = reset( $versionInfos ) )
             return $currentBlock;
 
-        $content = $this->contentService->loadContentByVersionInfo( $versionInfo );
-        $pageField = $this->getPageField( $content );
+            return $currentBlock;
+        $content = $this->contentService->loadContentByVersionInfo($versionInfo);
+        $pageField = $this->getPageField($content);
 
-        if( !$pageField->zones )
+        if (!$pageField->zones)
             return $currentBlock;
 
-        foreach( $pageField->zones as $zone )
-        {
-            foreach( $zone->blocks as $block )
-            {
-                if( $block->id === $this->block->id )
-                {
+        foreach ($pageField->zones as $zone) {
+            foreach ($zone->blocks as $block) {
+                if ($block->id === $this->block->id)
                     return $block;
-                }
             }
         }
 

@@ -42,15 +42,6 @@ class eZExceedTwigExtension extends Twig_Extension
         );
     }
 
-    /*
-    public function getFilters()
-    {
-        return array(
-            'translate' => new Twig_Filter_Method( $this, 'translate' )
-        );
-    }
-    */
-
     public function getName()
     {
         return 'ktq_ezexceed';
