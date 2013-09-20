@@ -4,7 +4,6 @@ namespace KTQ\Bundle\eZExceedBundle\Twig;
 
 use Twig_Extension;
 use Twig_Function_Method;
-//use Twig_Filter_Method;
 use Twig_Environment;
 use Twig_Template;
 use Symfony\Component\Templating\EngineInterface;
