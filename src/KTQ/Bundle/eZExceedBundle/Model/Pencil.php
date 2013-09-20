@@ -104,11 +104,11 @@ class Pencil
 
     public function fill($input)
     {
+        $this->entities = array();
         if (is_array($input)) {
             foreach ($input as $key => $value) {
                 // Arrays of blocks are not supported
-                if($value instanceof Block)
-                    return false;
+                if ($value instanceof Block) { return false; }
 
                 // Array contains Contents or Locations
                 if (is_numeric($key)) {

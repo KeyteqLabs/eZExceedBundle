@@ -4,7 +4,6 @@ namespace KTQ\Bundle\eZExceedBundle\Twig;
 
 use Twig_Extension;
 use Twig_Function_Method;
-//use Twig_Filter_Method;
 use Twig_Environment;
 use Twig_Template;
 use Symfony\Component\Templating\EngineInterface;
@@ -21,19 +20,19 @@ class eZExceedTwigExtension extends Twig_Extension
     protected $templateEngine;
     protected $pencil;
 
-    public function __construct(
-        Repository $repository,
-        LegacyConfigResolver $legacyConfigResolver,
-        EngineInterface $templateEngine,
-        Pencil $pencil)
+    public function __construct(Repository $repository, LegacyConfigResolver $legacyConfigResolver, EngineInterface $templateEngine, Pencil $pencil)
     {
         $this->repository = $repository;
         $this->legacyConfigResolver = $legacyConfigResolver;
         $this->templateEngine = $templateEngine;
-
         $this->pencil = $pencil;
     }
 
+    /**
+     * Get function names provided by extension
+     *
+     * @return array
+     */
     public function getFunctions()
     {
         return array(
@@ -42,6 +41,11 @@ class eZExceedTwigExtension extends Twig_Extension
         );
     }
 
+    /**
+     * Get name of twig extension
+     *
+     * @return string
+     */
     public function getName()
     {
         return 'ktq_ezexceed';
@@ -100,11 +104,4 @@ class eZExceedTwigExtension extends Twig_Extension
 
         return $this->legacyConfigResolver->getParameter( $section . '.' . $name, $file );
     }
-
-    /*
-    public function translate( string $string, string $context )
-    {
-        // return translated string
-    }
-    */
 }
