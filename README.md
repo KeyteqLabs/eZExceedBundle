@@ -1,13 +1,7 @@
 # eZExceedBundle
 
-Symfony/eZ5 bundle for eZ Exceed
+eZ Publish 5.x bundle for eZ Exceed.
+This is an add on to the `ezexceed` eZ Publish legacy extension.
+For installation instructions see the [eZ Exceed guide](keyteqlabs.github.io/ezexceed-guide/).
 
-## Changelog
-
-### 0.3.0
-
-Removes loading of block from users drafts as it caused eZ Publish to crash internally while converting the data
-
-### 0.2.0
-
-First working preview
+[Changelog](https://github.com/KeyteqLabs/eZExceedBundle/releases)
