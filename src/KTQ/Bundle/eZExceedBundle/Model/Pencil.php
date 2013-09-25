@@ -74,6 +74,9 @@ class Pencil
     // @var boolean
     protected $canCurrentUserEditCurrentContent;
 
+    // @var object
+    protected $serviceContainer;
+
 
     public function __construct( $serviceContainer, Repository $repository, PageService $pageService )
     {
@@ -90,20 +93,27 @@ class Pencil
         $this->languageService = $this->repository->getContentLanguageService();
         $this->pageService = $pageService;
 
-        $locationId = $serviceContainer->get('request')->attributes->get('locationId');
-        if ($locationId) {
-            $this->currentLocation = $this->locationService->loadLocation($locationId);
-            $this->currentContent = $this->contentService->loadContentByContentInfo($this->currentLocation->contentInfo);
-            $this->currentContentId = $this->currentContent->getVersionInfo()->contentInfo->id;
-            $this->canCurrentUserEditCurrentContent = $this->repository->canUser( 'content', 'edit', $this->currentContent );
-        }
-
+        $this->serviceContainer = $serviceContainer;
         // TODO: Remove
         $this->zoneIndex = 0;
     }
 
+    protected function loadLocation()
+    {
+        if (!$this->currentContent) {
+            $locationId = $this->serviceContainer->get('request')->attributes->get('locationId');
+            if ($locationId) {
+                $this->currentLocation = $this->locationService->loadLocation($locationId);
+                $this->currentContent = $this->contentService->loadContentByContentInfo($this->currentLocation->contentInfo);
+                $this->currentContentId = $this->currentContent->getVersionInfo()->contentInfo->id;
+                $this->canCurrentUserEditCurrentContent = $this->repository->canUser( 'content', 'edit', $this->currentContent );
+            }
+        }
+    }
+
     public function fill($input)
     {
+        $this->loadLocation();
         $this->entities = array();
         if (is_array($input)) {
             foreach ($input as $key => $value) {
