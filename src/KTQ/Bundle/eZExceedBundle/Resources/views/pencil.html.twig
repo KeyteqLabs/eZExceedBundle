@@ -1,0 +1,84 @@
+{#
+    TODO:
+    * Implement HTTP header check
+    * Add translations
+    * Dynamically load images which are now given a hard-coded path
+#}
+{# if eq( http-header('X-Exceed-RenderToolbar'), 'no' )|not #}
+    {% set manualaddingofitems = "enabled" %}
+    {% set locale = ini('ContentObjectLocale', 'RegionalSettings', 'site.ini') %}
+    {% set manualaddingofitems = "enabled" %}
+    {# TODO Make this shit work
+    {% set manualaddingofitems = ini('ManualAddingOfItems', pencil.page.block.type, 'block.ini') %}
+    #}
+    {% if '@' in locale %}
+        {% set locale = locale|split('@')[0] %}
+    {% endif %}
+    {% if pencil.page.field and pencil.content.canedit %}
+        {% set canedit = true %}
+    {% else %}
+        {% set canedit = false %}
+    {% endif %}
+    {% if canedit or pencil.entities %}
+        <div class="eze">
+            <div class="eze-pencil eze-block-pencil kp-edit-block invisible">
+                <div class="kp-edit-block-box">
+                    <ul class="kp-edit-block-elements">
+                        {% if canedit %}
+                            {% if pencil.page.block %}
+                                {% if manualaddingofitems == 'enabled' %}
+                                    <li class="add">
+                                        <a class="item"
+                                            data-object-id="{{ pencil.content.id|e }}"
+                                            data-zone-index="{{ pencil.page.zone.index|e }}"
+                                            data-block-id="{{ pencil.page.block.id|e }}"
+                                            data-language="{{ locale|e }}"
+                                            data-block-name="{{ pencil.page.block.name|e }}"
+                                        >
+                                            <img src="/extension/ezexceed/design/ezexceed/images/kp/16x16/white/Add.png" class="icon-16" alt/>
+                                            <strong>Add</strong> content to “{{ pencil.page.block.name|e }}”
+                                        </a>
+                                    </li>
+                                {% endif %}
+                            {% else %}
+                                <li>
+                                    <span>{{ pencil.title }}</span>
+                                </li>
+                            {% endif %}
+                        {% endif %}
+                        {% for entity in pencil.entities %}
+                            {% if entity.separator %}
+                                <li class="separator">{{ entity.title|e }}</li>
+                            {% else %}
+                                <li data-id="{{ entity.id|e }}" class="eze-node">
+                                    <a class="kp-edit-node item"
+                                        data-object-id="{{ entity.id|e }}"
+                                        data-language="{{ locale|e }}"
+                                        data-class-identifier="{{ entity.classIdentifier|e }}"
+                                    >
+                                        <img src="/extension/ezexceed/design/ezexceed/images/kp/16x16/white/Edit.png" class="icon-16" alt/>
+                                        <strong>Edit</strong> “{{ entity.name|e }}”
+                                    </a>
+                                </li>
+                            {% endif %}
+                        {% endfor %}
+                        {% if canedit %}
+                            <li class="edit">
+                                <a class="item"
+                                    data-object-id="{{ pencil.content.id|e }}"
+                                    data-zone-index="{{ pencil.page.zone.index|e }}"
+                                    data-block-id="{{ pencil.page.block.id|e }}"
+                                    data-language="{{ locale|e }}"
+                                    data-block-name="{{ pencil.page.block.name }}"
+                                >
+                                    <img src="/extension/ezexceed/design/ezexceed/images/kp/16x16/white/Settings.png" class="icon-16" alt/>
+                                    <strong>Settings</strong> for “{{ pencil.page.block.name|e }}”
+                                </a>
+                            </li>
+                        {% endif %}
+                    </ul>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+{# endif #}

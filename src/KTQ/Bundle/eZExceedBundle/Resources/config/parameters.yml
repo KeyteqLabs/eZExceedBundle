@@ -1,0 +1,3 @@
+parameters:
+    ezpublish.view_manager.class: KTQ\Bundle\eZExceedBundle\Model\DraftViewManager
+    ezpublish.fieldType.ezpage.pageService.class: KTQ\Bundle\eZExceedBundle\Model\PageService

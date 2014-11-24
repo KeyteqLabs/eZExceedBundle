@@ -1,0 +1,8 @@
+{
+  "name": "keyteqlabs/ezexceedbundle",
+  "autoload" : {
+    "psr-0":{
+      "KTQ": "src/"
+    }
+  }
+}
