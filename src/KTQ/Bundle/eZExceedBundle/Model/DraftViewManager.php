@@ -81,7 +81,12 @@ class DraftViewManager extends Manager
         $contentService = $this->repository->getContentService();
 
         $content = $contentService->loadContentByContentInfo($contentInfo, $languages);
-        if ($displayMode != 'latest') {
+
+        $currentUser = $this->repository->getCurrentUser();
+        $anonymousUserId = $this->configResolver->getParameter('UserSettings.AnonymousUserID');
+        $isAnonymous = $currentUser->id == $anonymousUserId;
+
+        if ($displayMode != 'latest' || $isAnonymous) {
             return $content;
         }
 
