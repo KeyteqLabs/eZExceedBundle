@@ -21,6 +21,8 @@ use RuntimeException;
 
 class DraftViewManager extends Manager
 {
+    protected static $draftCache = array();
+
     /** @var Repository */
     protected $repository;
 
@@ -83,6 +85,7 @@ class DraftViewManager extends Manager
         $content = $contentService->loadContentByContentInfo($contentInfo, $languages);
 
         $currentUser = $this->repository->getCurrentUser();
+        $currentUserId = $currentUser->id;
         $anonymousUserId = $this->configResolver->getParameter('UserSettings.AnonymousUserID');
         $isAnonymous = $currentUser->id == $anonymousUserId;
 
@@ -91,7 +94,11 @@ class DraftViewManager extends Manager
         }
 
         try {
-            $drafts = $contentService->loadContentDrafts($this->repository->getCurrentUser());
+            if (!isset(self::$draftCache[$currentUserId])) {
+                self::$draftCache[$currentUserId] = $contentService->loadContentDrafts($currentUser);
+            }
+
+            $drafts = self::$draftCache[$currentUserId];
             usort($drafts, array($this, 'compareDrafts'));
             foreach ($drafts as $draft) {
                 // Wrong object
