@@ -17,12 +17,13 @@ use eZ\Publish\API\Repository\LanguageService;
 use eZ\Publish\API\Repository\LocationService;
 use eZ\Publish\API\Repository\Values\Content\Content;
 use eZ\Publish\API\Repository\Values\Content\Location;
+use eZ\Publish\Core\MVC\Symfony\Templating\Twig\Extension\ContentExtension;
 use eZ\Publish\Core\SignalSlot\Repository;
-use eZ\Publish\API\Repository\Values\Content\VersionInfo;
 use eZ\Publish\Core\FieldType\Page\Parts\Page;
 use eZ\Publish\Core\FieldType\Page\Parts\Block;
 use ezexceed\models\content\Object as eZExceedObject;
 use Symfony\Component\DependencyInjection\ContainerInterface;
+use Symfony\Component\HttpFoundation\Request;
 
 class Pencil
 {
@@ -32,23 +33,25 @@ class Pencil
     /** @var int */
     protected $currentContentId;
 
-    /** @var Location */
-    protected $currentLocation;
-
     /** @var array */
-    protected $entities;
+    protected $entities = array();
 
     /** @var string */
-    protected $title;
+    protected $title = '';
 
     /** @var Page */
     protected $pageField;
 
     /** @var int */
-    protected $zoneIndex;
+    protected $zoneIndex = 0;
 
     /** @var Block */
     protected $block;
+
+    /** @var boolean */
+    protected $canCurrentUserEditCurrentContent;
+
+    // Services below.
 
     /** @var Repository */
     protected $repository;
@@ -68,49 +71,69 @@ class Pencil
     /** @var LanguageService */
     protected $languageService;
 
-    /** @var boolean */
-    protected $canCurrentUserEditCurrentContent;
+    /** @var Request */
+    protected $request;
 
-    /** @var ContainerInterface */
-    protected $serviceContainer;
+    /** @var ContentExtension  */
+    protected $contentExtension;
 
-
-    public function __construct(ContainerInterface $serviceContainer, Repository $repository, PageService $pageService)
+    public function __construct(ContainerInterface $container)
     {
-        $this->entities = array();
-        $this->title = '';
-        $this->block = null;
-
-        $this->repository = $repository;
-
-        // Services
+        $this->repository = $container->get('ezpublish.api.repository');
         $this->contentService = $this->repository->getContentService();
         $this->contentTypeService = $this->repository->getContentTypeService();
         $this->locationService = $this->repository->getLocationService();
         $this->languageService = $this->repository->getContentLanguageService();
-        $this->pageService = $pageService;
+        $this->pageService = $container->get('ezpublish.fieldType.ezpage.pageService');
+        $this->contentExtension = $container->get('ezpublish.twig.extension.content');
+        $this->request = $container->get('request');
+    }
 
-        $this->serviceContainer = $serviceContainer;
-        // TODO: Remove
+    protected function reset()
+    {
+        $this->currentContent = null;
+        $this->currentContentId = null;
+        $this->entities = array();
+        $this->title = '';
+        $this->pageField = null;
         $this->zoneIndex = 0;
+        $this->block = null;
+        $this->canCurrentUserEditCurrentContent = null;;
     }
 
-    protected function loadLocation()
+    protected function loadContent($contentId = false, $locationId = false)
     {
-        if (!$this->currentContent) {
-            $locationId = $this->serviceContainer->get('request')->attributes->get('locationId');
-            if ($locationId) {
-                $this->currentLocation = $this->locationService->loadLocation($locationId);
-                $this->currentContent = $this->contentService->loadContentByContentInfo($this->currentLocation->contentInfo);
-                $this->currentContentId = $this->currentContent->getVersionInfo()->contentInfo->id;
-                $this->canCurrentUserEditCurrentContent = $this->repository->canUser('content', 'edit', $this->currentContent);
-            }
+        $locationId = $locationId ?: $this->request->attributes->get('locationId');
+        if ($contentId) {
+            $content = $this->contentService->loadContent($contentId);
         }
+        elseif ($locationId) {
+            $location = $this->locationService->loadLocation($locationId);
+            $content = $this->contentService->loadContent($location->contentId);
+        }
+        else {
+            return;
+        }
+
+        $this->currentContent = $content;
+        $this->currentContentId = $content->id;
+        $this->canCurrentUserEditCurrentContent = $this->repository->canUser('content', 'edit', $content);
     }
 
-    public function fill($input)
+    public function fill($input, $contentId = false, $locationId = false)
     {
-        $this->loadLocation();
+        // Can't set scope to prototype, this method prevents state from leaking between calls.
+        $this->reset();
+
+        if (!$contentId && $input instanceof Content) {
+            $contentId = $input->id;
+        }
+        elseif (!$locationId && $input instanceof Location) {
+            $contentId = $input->contentId;
+        }
+
+        $this->loadContent($contentId, $locationId);
+
         $this->entities = array();
         if (is_array($input)) {
             foreach ($input as $key => $value) {
@@ -129,11 +152,11 @@ class Pencil
                     $this->addIdArray($value, $key);
                 }
             }
-        } else {
-            if ($this->repository->canUser('content', 'edit', $this->currentContent)) {
-                $this->addEntity($input);
-            }
         }
+        elseif ($this->repository->canUser('content', 'edit', $this->currentContent)) {
+            $this->addEntity($input);
+        }
+
         return true;
     }
 
@@ -157,7 +180,7 @@ class Pencil
             $contentVersionInfo = $content->getVersionInfo();
             $contentTypeIdentifier = $this->contentTypeService->loadContentType($contentVersionInfo->contentInfo->contentTypeId)->identifier;
 
-            $name = $this->serviceContainer->get('ezpublish.twig.extension.content')->getTranslatedContentName($content);
+            $name = $this->contentExtension->getTranslatedContentName($content);
 
             $entity = array(
                 'id' => $content->__get('id'),
@@ -209,9 +232,7 @@ class Pencil
 
     protected function addIdArray($values, $type)
     {
-        // TODO: Translate somehow
-        // $this->title = \ezpI18n::tr( 'ezexceed', 'Edit ' . $type );
-        $this->title = 'Edit ' . $type;
+        $this->title = \ezpI18n::tr('ezexceed', 'Edit ' . $type);
 
         if ($type === 'objects') {
             foreach ($values as $contentId) {
@@ -265,45 +286,6 @@ class Pencil
         }
 
         return null;
-    }
-
-    protected function fetchBlockFromLatestUserDraft($currentBlock)
-    {
-        if ($this->pageField === null) {
-            return $currentBlock;
-        }
-
-        $allCurrentUserDrafts = $this->contentService->loadContentDrafts();
-        if (!$allCurrentUserDrafts) {
-            return $currentBlock;
-        }
-
-        $contentId = $this->currentContentId;
-        $versionInfoFilter = function (VersionInfo $version) use ($contentId) {
-            return $version->contentInfo->id === $contentId;
-        };
-
-        $versionInfos = array_filter($allCurrentUserDrafts, $versionInfoFilter);
-
-        if (!$versionInfo = reset($versionInfos)) {
-            return $currentBlock;
-        }
-
-        $content = $this->contentService->loadContentByVersionInfo($versionInfo);
-        $pageField = $this->getPageField($content);
-
-        if (!$pageField->zones) {
-            return $currentBlock;
-        }
-
-        foreach ($pageField->zones as $zone) {
-            foreach ($zone->blocks as $block) {
-                if ($block->id === $this->block->id)
-                    return $block;
-            }
-        }
-
-        return $currentBlock;
     }
 
     protected function addSeparator($title = '')

@@ -57,16 +57,19 @@ class eZExceedTwigExtension extends Twig_Extension
      * a content object or a collection of such
      *
      * @param mixed $input An eZ Flow block object, a content object or a collection of such
+     * @param bool $contentId
+     * @param bool $locationId
+     *
      * @return string The HTML markup
      */
 
-    public function eZExceedPencil($input)
+    public function eZExceedPencil($input, $contentId = false, $locationId = false)
     {
         if ($this->repository->getCurrentUser()->login === 'anonymous') {
             return false;
         }
 
-        if (!$this->pencil->fill($input)) {
+        if (!$this->pencil->fill($input, $contentId, $locationId)) {
             return false;
         }
 
@@ -82,7 +85,7 @@ class eZExceedTwigExtension extends Twig_Extension
                     ),
                     'block' => array(
                         'id' => $this->pencil->attribute('block')->id,
-                        'name' => trim( $this->pencil->attribute('block')->name ),
+                        'name' => trim( $this->pencil->attribute('block')->name),
                         'type' => $this->pencil->attribute('block')->type,
                         'data' => $this->pencil->attribute('block')
                     )
