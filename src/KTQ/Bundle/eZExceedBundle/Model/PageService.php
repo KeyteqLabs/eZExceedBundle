@@ -18,15 +18,34 @@ class PageService extends BasePageService
         $this->blocksById[$block->id] = $block;
 
         $items = array();
-        $items = $this->checkAddItems($block->items, $items);
+        // Newest modifications will be last in the array. Lets use them.
+        $items = $this->checkAddItems(array_reverse($block->items), $items);
         $items = $this->checkAddItems($this->getStorageGateway()->getWaitingBlockItems($block), $items);
         $items = $this->checkAddItems($this->getStorageGateway()->getValidBlockItems($block), $items);
         $items = array_filter($items);
+        $items = array_values($items);
+        // The ordering will probably be in reverse now, lets fix it.
+        usort($items, array($this, 'sortItems'));
 
         /** @noinspection PhpIllegalArrayKeyTypeInspection Spl-storage voodoo! */
         $this->validBlockItems[$block] = array_values($items);
     }
 
+    protected function sortItems(Item $a, Item $b)
+    {
+        if ($a->priority == $b->priority) {
+            return 0;
+        }
+
+        return $a->priority > $b->priority ? -1 : 1;
+    }
+
+    /**
+     * @param Item[] $items
+     * @param Item[] $array
+     *
+     * @return Item[]
+     */
     protected function checkAddItems($items, $array)
     {
         foreach ($items as $item) {
