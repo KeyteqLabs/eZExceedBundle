@@ -76,7 +76,7 @@ class DraftViewManager extends Manager
         }
     }
 
-    protected function loadUserDraft(ContentInfo $contentInfo)
+    public function loadUserDraft(ContentInfo $contentInfo)
     {
         $languages = $this->configResolver->getParameter('languages');
         $displayMode = $this->configResolver->getParameter('VersionManagement.DisplayMode', 'content');
@@ -143,4 +143,6 @@ class DraftViewManager extends Manager
 
         throw new RuntimeException( "Unable to find a template for #$contentInfo->id" );
     }
+
+
 }

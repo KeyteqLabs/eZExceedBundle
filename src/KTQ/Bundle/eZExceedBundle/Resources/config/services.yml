@@ -9,3 +9,17 @@ services:
         class: KTQ\Bundle\eZExceedBundle\Model\Pencil
         arguments: [ @service_container ]
         lazy: true
+
+    ezpublish.fieldType.ezpage.pageService:
+        class: %ezpublish.fieldType.ezpage.pageService.class%
+        factory_service: ezpublish.fieldType.ezpage.pageService.factory
+        factory_method: buildService
+        arguments:
+            - %ezpublish.fieldType.ezpage.pageService.class%
+            - @ezpublish.config.resolver
+            - @ezpublish.fieldType.ezpage.storage_gateway
+            - @ezpublish.api.service.content
+        lazy: true
+        calls:
+            -
+                [ setContainer, [@service_container] ]
