@@ -68,21 +68,38 @@ class PageService extends BasePageService
 
     public function setContainer(ContainerInterface $container) { $this->container = $container; }
 
+    protected function matchUri()
+    {
+        $httpReferer = $this->container->get('request')->server->get('HTTP_REFERER');
+        if (!$httpReferer) {
+            return false;
+        }
+        $urlParts = parse_url($httpReferer);
+        if (!$urlParts) {
+            return false;
+        }
+        $path = isset($urlParts['path']) ? $urlParts['path'] : false;
+        if (!$path) {
+            return false;
+        }
+        $match = $this->container->get('router')->match($path);
+        if (!$match || !is_array($match) || !isset($match['locationId'])) {
+            return false;
+        }
+
+        return $match['locationId'];
+    }
+
     public function loadBlock($id)
     {
         try {
             return parent::loadBlock($id);
-        // Try to do a reverse-fetch using the url provided by the simplified-request.
+        // Try to do a reverse-fetch using http-referer.
         } catch (NotFoundException $e) {
-            $siteaccess = $this->container->get('ezpublish.siteaccess');
-            /** @noinspection PhpUndefinedMethodInspection */
-            $simplifiedRequest = $siteaccess->matcher->getRequest();
-            $match = $this->container->get('router')->match($simplifiedRequest->pathinfo);
-            if (isset($match['locationId'])) {
-                $location = $this->container->get('ezpublish.api.repository')->getLocationService()->loadLocation($match['locationId']);
+            if ($locationId = $this->matchUri()) {
+                $location = $this->container->get('ezpublish.api.repository')->getLocationService()->loadLocation($locationId);
                 $this->container->get('ezpublish.view_manager')->loadUserDraft($location->contentInfo);
             }
-
             // Lets try again and ultimately fail if we were unable to fetch the draft-block.
             return parent::loadBlock($id);
         }
